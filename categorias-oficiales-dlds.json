@@ -1,0 +1,39 @@
+{
+  "Grow": {
+    "Carpas y Propagadoras": ["Carpas", "Propagadoras"],
+    "Control de Clima": ["CO2", "Ductos y Abrazaderas", "Extractores", "Filtros de Carbón", "Humedad", "Ventiladores"],
+    "Control de Plagas": ["Fungicidas", "Insecticidas"],
+    "Cosecha y Almacenaje": ["Contenedores y Bolsas", "Mallas para Secado", "Reguladores de Humedad", "Tijeras", "Trimmer"],
+    "Fertilizantes": ["Advanced Nutrients", "Athena", "BAC", "Biobizz (Líquidos)", "Canna (Líquidos)", "CBG", "Grotek", "Hype", "Microorganismos y Complementos", "Top Crop", "Wonderland"],
+    "Microorganismos y Complementos": ["Micorrizas", "Trichodermas", "Bacterias", "Complementos"],
+    "Herramientas": ["Scrog y Tutores", "Varios"],
+    "Iluminación": ["Delight", "Mylar", "Balastros y Cables", "Ampolletas", "Poleas", "Reflectores"],
+    "Macetas y Platos": ["Plásticas", "Platos y Bandejas", "Textiles", "Air"],
+    "Medición": ["Lupas", "Pesas", "PH, EC Y T°", "Termohigrómetros y Timers"],
+    "Riego": ["Jarras", "Lanzas y Pulverizadores"],
+    "Sustratos": ["Sustratos", "Jiffy"]
+  },
+  "Smoke": {
+    "Accesorios": ["Bandejas", "Ceniceros", "Contenedores", "Control de Olores", "Enroladoras", "Otros"],
+    "Bolsos y Textiles": ["Accesorios", "Bolsos", "Ropa"],
+    "Bonglab": ["Atrapa Ceniza", "Bongs Big Boys", "Bongs Clásicos", "Bongs Glass Cleaner", "Bongs Glicerina", "Bongs Home Round", "Mini Bongs", "Bongs Pipelines", "Quemadores"],
+    "Encendedores": ["Clipper", "Ronson", "Zengaz", "Zippo"],
+    "Extracciones": ["Accesorios", "Bangers", "Cartridges", "Liquidizers", "Papel y Mallas", "Prensas", "Sopletes", "Terpenos"],
+    "Moledores": ["Aluminio", "Cerámicos", "Plásticos", "Pro Model"],
+    "Otros Bongs y Pipas": ["Accesorios", "Bongs Pyrex", "Bongs Silicona", "Pipas y Hitters"],
+    "Papelillos y Blunts": ["1.25", "Blunts y Wraps", "Conos y Rollos", "Filtros y Boquillas", "King Size"],
+    "Suplementos Alimenticios": ["Clean Me Detox", "Kleaner", "Zydot"],
+    "Tabaco": ["Springfield", "Tennessee Virginia"],
+    "Vapers y Esencias": ["Accesorios", "Airistech Neo", "Esencias de Vapers", "Innobar", "Nova", "Oxbar", "Palax", "Recargables", "Wotofo", "Z Bold"],
+    "Vaporizadores": ["Accesorios", "Baterías 510", "Extracciones", "Flores"]
+  },
+  "Semillas": {
+    "Automáticas": ["Beat Seeds", "BSF", "Buddha Seeds", "Delirium Seeds", "Dutch Passion", "Eva Seeds", "Fast Buds", "Green House", "Humboldt Seeds", "Medical Seeds", "Pyramid Seeds", "Rkiem Seeds", "Royal Queen", "Seeds Bank", "Seedstockers", "Sensi Seeds", "Strain Machine", "Super Sativa Seed Club", "Sweet Seeds"],
+    "Automáticas XL": ["Sensi Seeds", "Sweet Seeds", "BSF", "Delirium Seeds", "Strain Machine", "Dutch Passion", "Granel"],
+    "Fast": ["BSF", "Delirium Seeds", "Dutch Passion", "Fast Buds", "Royal Queen", "Seedstockers", "Strain Machine", "Sweet Seeds"],
+    "Feminizadas": ["Beat Seeds", "BSF", "Buddha Seeds", "Delirium Seeds", "Dutch Passion", "Eva Seeds", "Green House", "Medical Seeds", "Pyramid Seeds", "Ripper Seeds", "Rkiem Seeds", "Royal Queen", "Secret File", "Seedstockers", "Sensi Seeds", "Strain Machine", "Super Sativa Seed Club", "Sweet Seeds"],
+    "Granel": ["Granel"],
+    "Regulares": ["Rkiem Seeds", "Royal Queen", "Sensi Seeds"],
+    "CBD": ["Delirium Seeds", "Dutch Passion", "Eva Seeds", "Medical Seeds", "Rkiem Seeds", "Royal Queen", "Sensi Seeds", "Sweet Seeds"]
+  }
+}

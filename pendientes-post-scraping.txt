@@ -1,0 +1,97 @@
+POST SCRAPING - REVISIÓN LIMPIA
+
+1. Revisar resumen final del scraper
+- Productos encontrados
+- Productos guardados
+- Productos omitidos
+- Reporte exportado
+- Error final si existe
+
+2. Revisar Grow
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'grow'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY subcategoria, sub2;
+
+3. Revisar Semillas
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'semillas'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY subcategoria, sub2;
+
+4. Revisar productos con nombre carpa
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%carpa%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+5. Revisar microorganismos
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%micorriz%'
+   OR nombre ILIKE '%trichoderm%'
+   OR nombre ILIKE '%bacter%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+6. Revisar semillas sin sub2
+SELECT nombre, producto_url, categoria, subcategoria, sub2
+FROM products_raw
+WHERE categoria = 'semillas'
+  AND (sub2 IS NULL OR sub2 = '')
+ORDER BY subcategoria, nombre;
+
+7. Confirmar si existen o no:
+- grow / carpas-y-propagadoras
+- grow / microorganismos-y-complementos
+- semillas / granel
+- semillas / autoxl
+- semillas / cbd
+- semillas / regulares
+
+8. No migrar a Neon hasta validar local
+
+
+CAMBIO FUTURO - CONTROL DE CATEGORÍAS
+
+Objetivo:
+además de reporte-scraping.csv, el scraper debe generar reporte-categorias.csv
+
+Cada fila debe guardar:
+- url
+- categoria
+- subcategoria
+- sub2
+- estado_categoria
+
+Estados posibles:
+- procesada
+- excluida_manual
+- omitida_redirect
+- sin_productos
+- con_error
+
+Esto servirá para saber exactamente:
+- qué categorías fueron descubiertas
+- cuáles fueron omitidas manualmente
+- cuáles fueron omitidas por redirect o regla del scraper
+- cuáles quedaron sin productos
+- cuáles dieron error
+
+POSIBLES FALTANTES REALES A REVISAR AL TERMINAR
+
+Grow:
+- carpas-y-propagadoras
+- microorganismos-y-complementos
+
+Semillas:
+- granel
+- autoxl
+- cbd
+- regulares
+
+Otros:
+- semillas sin sub2
+- categorías omitidas manualmente
+- categorías omitidas por redirect sospechoso
