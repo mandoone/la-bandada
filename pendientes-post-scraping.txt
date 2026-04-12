@@ -95,3 +95,83 @@ Otros:
 - semillas sin sub2
 - categorías omitidas manualmente
 - categorías omitidas por redirect sospechoso
+
+
+SQL EXACTO PARA REVISAR FALTANTES CRÍTICOS
+
+1. Ver si existe carpas-y-propagadoras
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'grow'
+  AND subcategoria = 'carpas-y-propagadoras'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY sub2;
+
+2. Ver productos con nombre carpa
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%carpa%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+3. Ver si existe microorganismos-y-complementos como subcategoria real
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'grow'
+  AND subcategoria = 'microorganismos-y-complementos'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY sub2;
+
+4. Ver productos relacionados a microorganismos
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%micorriz%'
+   OR nombre ILIKE '%trichoderm%'
+   OR nombre ILIKE '%bacter%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+SQL EXACTO PARA REVISAR FALTANTES CRÍTICOS
+
+1. Ver si existe carpas-y-propagadoras
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'grow'
+  AND subcategoria = 'carpas-y-propagadoras'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY sub2;
+
+2. Ver productos con nombre carpa
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%carpa%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+3. Ver si existe microorganismos-y-complementos como subcategoria real
+SELECT categoria, subcategoria, sub2, COUNT(*) AS productos
+FROM products_raw
+WHERE categoria = 'grow'
+  AND subcategoria = 'microorganismos-y-complementos'
+GROUP BY categoria, subcategoria, sub2
+ORDER BY sub2;
+
+4. Ver productos relacionados a microorganismos
+SELECT nombre, categoria, subcategoria, sub2, producto_url
+FROM products_raw
+WHERE nombre ILIKE '%micorriz%'
+   OR nombre ILIKE '%trichoderm%'
+   OR nombre ILIKE '%bacter%'
+ORDER BY categoria, subcategoria, sub2, nombre;
+
+DECISIÓN DESPUÉS DEL SCRAPING LIMPIO
+
+Si carpas-y-propagadoras y microorganismos-y-complementos siguen faltando:
+- revisar descubrimiento de categorías
+- revisar filtro partes.length === 3
+- revisar si DLDS muestra esas rutas distinto al resto
+
+Si aparecen productos con nombre carpa o microorganismos en otra subcategoria:
+- revisar parsearCategoria()
+- revisar URL real del producto/categoría
+- revisar si hubo mezcla o asignación incorrecta
+
+No migrar a Neon hasta cerrar este diagnóstico
+

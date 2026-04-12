@@ -211,6 +211,10 @@ async function scrapearProducto(page, url, categoria, subcategoria, sub2, intent
         el.src
       ).catch(() => null)
 
+      const galeria = await page.$$eval('.product-images img, .product-images-container img, .thumbnails img, [class*="thumb"] img', imgs => {
+        return [...new Set(imgs.map(i => i.getAttribute('data-image-large-src') || i.src).filter(Boolean))]
+      }).catch(() => [])
+
       const sku = await page.$eval('text=Referencia', el =>
         el.nextElementSibling?.innerText?.trim()
       ).catch(() => null)
@@ -237,7 +241,8 @@ async function scrapearProducto(page, url, categoria, subcategoria, sub2, intent
         imagen_url: imagen,
         producto_url: url,
         stock: 1,
-        estado: 'Vigente'
+        estado: 'Vigente',
+        galeria
       }
     } catch (err) {
       console.log(`  Intento ${intento}/${intentos} fallido: ${err.message.split('\n')[0]}`)
@@ -267,8 +272,8 @@ async function guardarProducto(producto) {
   await pool.query(
     `INSERT INTO products_raw
       (provider_id, sku, nombre, marca, categoria, subcategoria, sub2, precio_normal, precio_neto,
-       descuento, descripcion, imagen_url, producto_url, stock, estado)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+       descuento, descripcion, imagen_url, producto_url, stock, estado, galeria)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
     [
       1,
       producto.sku,
@@ -284,7 +289,8 @@ async function guardarProducto(producto) {
       producto.imagen_url,
       producto.producto_url,
       producto.stock,
-      producto.estado
+      producto.estado,
+      producto.galeria
     ]
   )
 
