@@ -410,8 +410,8 @@ async function main() {
     let totalGuardados = 0
     const reporteFilas = []
 
-    const EMPEZAR_DESDE = 112
-    const TERMINAR_EN = 113 // null = correr completo; número = índice base 0 inclusive
+    const EMPEZAR_DESDE = 0
+    const TERMINAR_EN = null // null = correr completo; número = índice base 0 inclusive
 
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
 

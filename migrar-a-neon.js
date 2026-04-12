@@ -31,8 +31,8 @@ async function migrar() {
         (provider_id, sku, nombre, marca, categoria, subcategoria, sub2,
          precio_normal, precio_neto, descuento, descripcion,
          imagen_url, producto_url, stock, estado, indicador,
-         cobertura_meses, fecha_captura)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         cobertura_meses, fecha_captura, galeria)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
       ON CONFLICT (producto_url) DO UPDATE SET
         sku          = EXCLUDED.sku,
         nombre       = EXCLUDED.nombre,
@@ -49,12 +49,13 @@ async function migrar() {
         estado       = EXCLUDED.estado,
         indicador    = EXCLUDED.indicador,
         cobertura_meses = EXCLUDED.cobertura_meses,
-        fecha_captura = EXCLUDED.fecha_captura
+        fecha_captura = EXCLUDED.fecha_captura,
+        galeria      = EXCLUDED.galeria
     `, [
       p.provider_id, p.sku, p.nombre, p.marca, p.categoria, p.subcategoria, p.sub2,
       p.precio_normal, p.precio_neto, p.descuento, p.descripcion,
       p.imagen_url, p.producto_url, p.stock, p.estado, p.indicador,
-      p.cobertura_meses, p.fecha_captura
+      p.cobertura_meses, p.fecha_captura, p.galeria
     ])
     migrados++
     if (migrados % 100 === 0) console.log(`  ${migrados}/${productos.rows.length} migrados...`)
