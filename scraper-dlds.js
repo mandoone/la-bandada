@@ -254,6 +254,8 @@ async function scrapearProducto(page, url, categoria, subcategoria, sub2, intent
   return null
 }
 
+const PROVIDER_DLDS = 1;
+
 async function guardarProducto(producto) {
   const existing = await pool.query(
     'SELECT id FROM products_raw WHERE producto_url = $1',
@@ -272,10 +274,10 @@ async function guardarProducto(producto) {
   await pool.query(
     `INSERT INTO products_raw
       (provider_id, sku, nombre, marca, categoria, subcategoria, sub2, precio_normal, precio_neto,
-       descuento, descripcion, imagen_url, producto_url, stock, estado, galeria)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+       descuento, descripcion, imagen_url, producto_url, stock, estado, galeria, indicador)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
     [
-      1,
+      PROVIDER_DLDS,
       producto.sku,
       producto.nombre,
       producto.marca,
@@ -290,7 +292,8 @@ async function guardarProducto(producto) {
       producto.producto_url,
       producto.stock,
       producto.estado,
-      producto.galeria
+      producto.galeria,
+      'vigente'
     ]
   )
 
@@ -411,9 +414,15 @@ async function main() {
     const reporteFilas = []
 
     const EMPEZAR_DESDE = 0
-    const TERMINAR_EN = null // null = correr completo; número = índice base 0 inclusive
+    const TERMINAR_EN = 0 // null = correr completo; número = índice base 0 inclusive
 
+    const esCorridaCompleta = (EMPEZAR_DESDE === 0 && TERMINAR_EN === null)
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
+
+    if (esCorridaCompleta) {
+      console.log('\n[SYNC] Iniciando sincronización completa. Marcando catálogo DLDS como pendiente_verificacion...');
+      await pool.query(`UPDATE products_raw SET indicador = 'pendiente_verificacion' WHERE provider_id = $1`, [PROVIDER_DLDS]);
+    }
 
     for (let ci = EMPEZAR_DESDE; ci < limite; ci++) {
       const catUrl = categorias[ci]
@@ -482,6 +491,17 @@ async function main() {
     console.log(`Productos encontrados: ${totalProductos}`)
     console.log(`Productos guardados (con stock): ${totalGuardados}`)
     console.log(`Productos omitidos (sin stock): ${totalProductos - totalGuardados}`)
+
+    if (esCorridaCompleta) {
+      console.log('\n[SYNC] Limpiando productos discontinuados en DLDS...');
+      const ocultados = await pool.query(`
+        UPDATE products_raw 
+        SET estado = 'Oculto' 
+        WHERE provider_id = $1 AND indicador = 'pendiente_verificacion'
+        RETURNING id
+      `, [PROVIDER_DLDS]);
+      console.log(`[SYNC] ${ocultados.rowCount} productos ya no existen y fueron marcados como Ocultos.`);
+    }
 
     const cabecera = 'categoria,subcategoria,sub2,url,nombre,estado'
     const filas = reporteFilas.map(r =>
