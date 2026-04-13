@@ -187,13 +187,13 @@ async function scrapearProducto(page, url, categoria, subcategoria, sub2, intent
       await page.waitForTimeout(1500)
 
       const nombre = await page.$eval('h1', el => el.innerText.trim()).catch(() => null)
-      if (!nombre) return null
+      if (!nombre) return { skip_reason: 'error' }
 
       const stockTexto = await page.$eval('.text-success, .text-error, .text-danger, [class*="stock"]', el =>
         el.innerText.trim()
       ).catch(() => '')
       const enStock = !stockTexto.toLowerCase().includes('sin stock')
-      if (!enStock) return null
+      if (!enStock) return { skip_reason: 'sin_stock' }
 
       const precioNormal = await page.$eval('.text-gray-text.line-through', el =>
         parseInt(el.innerText.replace(/\$|\.|,/g, '').trim())
@@ -251,7 +251,7 @@ async function scrapearProducto(page, url, categoria, subcategoria, sub2, intent
   }
 
   console.log(`  Omitido tras ${intentos} intentos: ${url}`)
-  return null
+  return { skip_reason: 'error' }
 }
 
 const PROVIDER_DLDS = 1;
@@ -413,8 +413,8 @@ async function main() {
     let totalGuardados = 0
     const reporteFilas = []
 
-    const EMPEZAR_DESDE = 0
-    const TERMINAR_EN = 0 // null = correr completo; número = índice base 0 inclusive
+    const EMPEZAR_DESDE = 100
+    const TERMINAR_EN = 100 // null = correr completo; número = índice base 0 inclusive
 
     const esCorridaCompleta = (EMPEZAR_DESDE === 0 && TERMINAR_EN === null)
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
@@ -449,17 +449,34 @@ async function main() {
             console.log(`  ${links.length} productos encontrados`)
             totalProductos += links.length
 
+            let rachaSinStock = 0;
+            let guardadosCategoria = 0;
+
             for (let i = 0; i < links.length; i++) {
               const producto = await scrapearProducto(page, links[i], categoria, subcategoria, sub2)
 
-              if (producto) {
+              if (producto && !producto.skip_reason) {
                 const estado = await guardarProducto(producto)
                 totalGuardados++
+                guardadosCategoria++
+                rachaSinStock = 0
                 console.log(`  ✓ [${i + 1}/${links.length}] ${producto.nombre} — $${producto.precio_neto}`)
                 reporteFilas.push({ categoria, subcategoria, sub2, url: links[i], nombre: producto.nombre, estado })
               } else {
-                console.log(`  ✗ [${i + 1}/${links.length}] Sin stock o error — omitido`)
-                reporteFilas.push({ categoria, subcategoria, sub2, url: links[i], nombre: '', estado: 'sin_stock' })
+                const isSinStock = producto?.skip_reason === 'sin_stock'
+                if (isSinStock) {
+                  rachaSinStock++
+                  console.log(`  ✗ [${i + 1}/${links.length}] Sin stock real — omitido`)
+                } else {
+                  rachaSinStock = 0
+                  console.log(`  ✗ [${i + 1}/${links.length}] Error DOM/Red — omitido (Racha reiniciada)`)
+                }
+                reporteFilas.push({ categoria, subcategoria, sub2, url: links[i], nombre: '', estado: producto?.skip_reason || 'error' })
+
+                if (guardadosCategoria >= 3 && rachaSinStock >= 5) {
+                  console.log(`  [!] Cortando categoría: 5 'sin stock' consecutivos después de éxito. Evitando listado muerto.`);
+                  break;
+                }
               }
             }
           }
@@ -471,17 +488,34 @@ async function main() {
         console.log(`  ${links.length} productos encontrados`)
         totalProductos += links.length
 
+        let rachaSinStock = 0;
+        let guardadosCategoria = 0;
+
         for (let i = 0; i < links.length; i++) {
           const producto = await scrapearProducto(page, links[i], categoria, subcategoria, sub2Parseado)
 
-          if (producto) {
+          if (producto && !producto.skip_reason) {
             const estado = await guardarProducto(producto)
             totalGuardados++
+            guardadosCategoria++
+            rachaSinStock = 0
             console.log(`  ✓ [${i + 1}/${links.length}] ${producto.nombre} — $${producto.precio_neto}`)
             reporteFilas.push({ categoria, subcategoria, sub2: sub2Parseado, url: links[i], nombre: producto.nombre, estado })
           } else {
-            console.log(`  ✗ [${i + 1}/${links.length}] Sin stock o error — omitido`)
-            reporteFilas.push({ categoria, subcategoria, sub2: sub2Parseado, url: links[i], nombre: '', estado: 'sin_stock' })
+            const isSinStock = producto?.skip_reason === 'sin_stock'
+            if (isSinStock) {
+              rachaSinStock++
+              console.log(`  ✗ [${i + 1}/${links.length}] Sin stock real — omitido`)
+            } else {
+              rachaSinStock = 0
+              console.log(`  ✗ [${i + 1}/${links.length}] Error DOM/Red — omitido (Racha reiniciada)`)
+            }
+            reporteFilas.push({ categoria, subcategoria, sub2: sub2Parseado, url: links[i], nombre: '', estado: producto?.skip_reason || 'error' })
+
+            if (guardadosCategoria >= 3 && rachaSinStock >= 5) {
+              console.log(`  [!] Cortando categoría: 5 'sin stock' consecutivos después de éxito. Evitando listado muerto.`);
+              break;
+            }
           }
         }
       }

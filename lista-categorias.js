@@ -1,5 +1,7 @@
 require('dotenv').config()
 const { chromium } = require('playwright')
+const fs = require('fs')
+const path = require('path')
 
 async function main() {
   const browser = await chromium.launch({ headless: false })
@@ -26,10 +28,39 @@ async function main() {
       )
     )
     links.forEach(l => todas.add(l))
+    console.log(`${seccion}: ${links.length} subcategorias`)
   }
 
+  const semillas = [
+    'https://www.dlds.cl/c/automaticas',
+    'https://www.dlds.cl/c/580/autoxl',
+    'https://www.dlds.cl/c/fast',
+    'https://www.dlds.cl/c/feminizadas',
+    'https://www.dlds.cl/c/granel',
+    'https://www.dlds.cl/c/regulares',
+    'https://www.dlds.cl/c/cbd',
+  ]
+  semillas.forEach(u => todas.add(u))
+  console.log(`Semillas: ${semillas.length} subcategorias añadidos`)
+
+  const extras = [
+    'https://www.dlds.cl/c/grow/carpas',
+    'https://www.dlds.cl/c/grow/propagadoras',
+  ]
+  extras.forEach(u => todas.add(u))
+  console.log(`Extras manuales: ${extras.length} subcategorias añadidas`)
+
   const arr = [...todas]
-  arr.forEach((url, i) => console.log(i, url))
+  console.log(`\nTotal final recolectado: ${arr.length} categorías únicas.\n`)
+
+  const reportePath = path.join(__dirname, 'lista_categorias_referencia.txt')
+  const lineasReporte = arr.map((url, i) => `${i.toString().padStart(3, '0')} - ${url}`)
+  
+  lineasReporte.forEach(l => console.log(l))
+  
+  fs.writeFileSync(reportePath, lineasReporte.join('\n'), 'utf8')
+  console.log(`\nReporte guardado exitosamente en: ${reportePath}`)
+
   await browser.close()
 }
 
