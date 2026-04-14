@@ -160,7 +160,13 @@ async function scrapearPagina(page, url) {
 
     const prevSize = todosLosLinks.size
     linksActuales.forEach(l => todosLosLinks.add(l))
-    console.log(`    → ${todosLosLinks.size - prevSize} nuevos (total ${todosLosLinks.size})`)
+    const nuevos = todosLosLinks.size - prevSize
+    console.log(`    → ${nuevos} nuevos (total ${todosLosLinks.size})`)
+
+    if (nuevos === 0) {
+      console.log(`    → 0 links nuevos encontrados en esta página — fin de paginación`)
+      break
+    }
 
     const btnSiguiente = await page.$('button.btn.btn-primary:has-text("Siguiente")')
     if (!btnSiguiente) break
@@ -170,9 +176,22 @@ async function scrapearPagina(page, url) {
     )
     if (deshabilitado) break
 
-    await btnSiguiente.click()
+    const urlAntesDeClick = page.url()
+    try {
+      await btnSiguiente.click({ timeout: 5000 })
+    } catch (e) {
+      console.log(`    → Botón Siguiente no interactuable (posiblemente nativamente en el DOM) — fin`)
+      break
+    }
+
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
+
+    if (page.url() === urlAntesDeClick) {
+      console.log(`    → La URL no cambió tras hacer click — fin de paginación`)
+      break
+    }
+
     numPagina++
   }
 
@@ -379,7 +398,13 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
 
     const prevSize = todosLosLinks.size
     linksActuales.forEach(l => todosLosLinks.add(l))
-    console.log(`    → ${todosLosLinks.size - prevSize} nuevos (total ${todosLosLinks.size})`)
+    const nuevos = todosLosLinks.size - prevSize
+    console.log(`    → ${nuevos} nuevos (total ${todosLosLinks.size})`)
+
+    if (nuevos === 0) {
+      console.log(`    → 0 links nuevos encontrados en esta página — fin de paginación`)
+      break
+    }
 
     const btnSiguiente = await page.$('button.btn.btn-primary:has-text("Siguiente")')
     if (!btnSiguiente) break
@@ -389,9 +414,22 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
     )
     if (deshabilitado) break
 
-    await btnSiguiente.click()
+    const urlAntesDeClick = page.url()
+    try {
+      await btnSiguiente.click({ timeout: 5000 })
+    } catch (e) {
+      console.log(`    → Botón Siguiente no interactuable (posiblemente nativamente en el DOM) — fin`)
+      break
+    }
+
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
+
+    if (page.url() === urlAntesDeClick) {
+      console.log(`    → La URL no cambió tras hacer click — fin de paginación`)
+      break
+    }
+
     numPagina++
   }
 
@@ -413,8 +451,8 @@ async function main() {
     let totalGuardados = 0
     const reporteFilas = []
 
-    const EMPEZAR_DESDE = 100
-    const TERMINAR_EN = 100 // null = correr completo; número = índice base 0 inclusive
+    const EMPEZAR_DESDE = 22
+    const TERMINAR_EN = 22 // null = correr completo; número = índice base 0 inclusive
 
     const esCorridaCompleta = (EMPEZAR_DESDE === 0 && TERMINAR_EN === null)
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
