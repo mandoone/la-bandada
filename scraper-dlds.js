@@ -451,8 +451,8 @@ async function main() {
     let totalGuardados = 0
     const reporteFilas = []
 
-    const EMPEZAR_DESDE = 22
-    const TERMINAR_EN = 22 // null = correr completo; número = índice base 0 inclusive
+    const EMPEZAR_DESDE = 0
+    const TERMINAR_EN = null // null = correr completo; número = índice base 0 inclusive
 
     const esCorridaCompleta = (EMPEZAR_DESDE === 0 && TERMINAR_EN === null)
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
@@ -574,6 +574,22 @@ async function main() {
       `, [PROVIDER_DLDS]);
       console.log(`[SYNC] ${ocultados.rowCount} productos ya no existen y fueron marcados como Ocultos.`);
     }
+
+    const resVigentes = await pool.query(
+      `SELECT COUNT(*) FROM products_raw WHERE provider_id = $1 AND estado = 'Vigente'`,
+      [PROVIDER_DLDS]
+    );
+    const resOcultos = await pool.query(
+      `SELECT COUNT(*) FROM products_raw WHERE provider_id = $1 AND estado = 'Oculto'`,
+      [PROVIDER_DLDS]
+    );
+    const vigentesBD = parseInt(resVigentes.rows[0].count, 10);
+    const ocultosBD = parseInt(resOcultos.rows[0].count, 10);
+
+    console.log('\n=== ESTADO FINAL BASE DE DATOS LOCAL ===');
+    console.log(`- Vigentes con stock finales: ${vigentesBD}`);
+    console.log(`- Ocultos finales: ${ocultosBD}`);
+    console.log(`- Total sincronizable a Neon: ${vigentesBD + ocultosBD}\n`);
 
     const cabecera = 'categoria,subcategoria,sub2,url,nombre,estado'
     const filas = reporteFilas.map(r =>
