@@ -119,7 +119,7 @@ async function scrapearPagina(page, url) {
   ]
 
   if (URLS_EXCLUIDAS.includes(url)) {
-    console.log('    URL excluida — categoria rota en DLDS, omitiendo')
+    console.log('    URL excluida - categoria rota en DLDS, omitiendo')
     return []
   }
 
@@ -139,19 +139,19 @@ async function scrapearPagina(page, url) {
     )
 
     if (numPagina === 1 && linksActuales.length > 20) {
-      console.log('    Página 1 con más de 20 productos — redirect a tienda completa, omitiendo')
+      console.log('    Pagina 1 con mas de 20 productos - redirect a tienda completa, omitiendo')
       return []
     }
 
     const linksKey = [...linksActuales].sort().join('|')
     if (linksKeyAnterior !== null && linksKey === linksKeyAnterior) {
-      console.log(`    → mismo conjunto completo que anterior — fin`)
+      console.log(`    -> mismo conjunto completo que anterior - fin`)
       break
     }
 
     const top5 = linksActuales.slice(0, 5).join('|')
     if (top5Anterior !== null && top5 === top5Anterior) {
-      console.log(`    → primeros 5 links idénticos a anterior — fin`)
+      console.log(`    -> primeros 5 links identicos a anterior - fin`)
       break
     }
 
@@ -161,10 +161,10 @@ async function scrapearPagina(page, url) {
     const prevSize = todosLosLinks.size
     linksActuales.forEach(l => todosLosLinks.add(l))
     const nuevos = todosLosLinks.size - prevSize
-    console.log(`    → ${nuevos} nuevos (total ${todosLosLinks.size})`)
+    console.log(`    -> ${nuevos} nuevos (total ${todosLosLinks.size})`)
 
     if (nuevos === 0) {
-      console.log(`    → 0 links nuevos encontrados en esta página — fin de paginación`)
+      console.log(`    -> 0 links nuevos encontrados en esta pagina - fin de paginacion`)
       break
     }
 
@@ -180,7 +180,7 @@ async function scrapearPagina(page, url) {
     try {
       await btnSiguiente.click({ timeout: 5000 })
     } catch (e) {
-      console.log(`    → Botón Siguiente no interactuable (posiblemente nativamente en el DOM) — fin`)
+      console.log(`    -> Boton Siguiente no interactuable (posiblemente nativamente en el DOM) - fin`)
       break
     }
 
@@ -188,7 +188,7 @@ async function scrapearPagina(page, url) {
     await page.waitForTimeout(2000)
 
     if (page.url() === urlAntesDeClick) {
-      console.log(`    → La URL no cambió tras hacer click — fin de paginación`)
+      console.log(`    -> La URL no cambio tras hacer click - fin de paginacion`)
       break
     }
 
@@ -383,13 +383,13 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
 
     const linksKey = [...linksActuales].sort().join('|')
     if (linksKeyAnterior !== null && linksKey === linksKeyAnterior) {
-      console.log(`    → mismo conjunto que anterior — fin`)
+      console.log(`    -> mismo conjunto que anterior - fin`)
       break
     }
 
     const top5 = linksActuales.slice(0, 5).join('|')
     if (top5Anterior !== null && top5 === top5Anterior) {
-      console.log(`    → top-5 idénticos — fin`)
+      console.log(`    -> top-5 identicos - fin`)
       break
     }
 
@@ -399,10 +399,10 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
     const prevSize = todosLosLinks.size
     linksActuales.forEach(l => todosLosLinks.add(l))
     const nuevos = todosLosLinks.size - prevSize
-    console.log(`    → ${nuevos} nuevos (total ${todosLosLinks.size})`)
+    console.log(`    -> ${nuevos} nuevos (total ${todosLosLinks.size})`)
 
     if (nuevos === 0) {
-      console.log(`    → 0 links nuevos encontrados en esta página — fin de paginación`)
+      console.log(`    -> 0 links nuevos encontrados en esta pagina - fin de paginacion`)
       break
     }
 
@@ -418,7 +418,7 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
     try {
       await btnSiguiente.click({ timeout: 5000 })
     } catch (e) {
-      console.log(`    → Botón Siguiente no interactuable (posiblemente nativamente en el DOM) — fin`)
+      console.log(`    -> Boton Siguiente no interactuable (posiblemente nativamente en el DOM) - fin`)
       break
     }
 
@@ -426,7 +426,7 @@ async function scrapearPaginaConFiltro(page, catUrl, bancoTexto) {
     await page.waitForTimeout(2000)
 
     if (page.url() === urlAntesDeClick) {
-      console.log(`    → La URL no cambió tras hacer click — fin de paginación`)
+      console.log(`    -> La URL no cambio tras hacer click - fin de paginacion`)
       break
     }
 
@@ -458,7 +458,7 @@ async function main() {
     const limite = TERMINAR_EN !== null ? TERMINAR_EN + 1 : categorias.length
 
     if (esCorridaCompleta) {
-      console.log('\n[SYNC] Iniciando sincronización completa. Marcando catálogo DLDS como pendiente_verificacion...');
+      console.log('\n[SYNC] Iniciando sincronizacion completa. Marcando catalogo DLDS como pendiente_verificacion...');
       await pool.query(`UPDATE products_raw SET indicador = 'pendiente_verificacion' WHERE provider_id = $1`, [PROVIDER_DLDS]);
     }
 
@@ -477,7 +477,7 @@ async function main() {
 
         if (bancos.length > 0) {
           procesadoConBancos = true
-          console.log(`  → ${bancos.length} bancos detectados: ${bancos.map(b => b.texto).join(', ')}`)
+          console.log(`  -> ${bancos.length} bancos detectados: ${bancos.map(b => b.texto).join(', ')}`)
 
           for (const banco of bancos) {
             const sub2 = banco.texto.toLowerCase()
@@ -498,21 +498,21 @@ async function main() {
                 totalGuardados++
                 guardadosCategoria++
                 rachaSinStock = 0
-                console.log(`  ✓ [${i + 1}/${links.length}] ${producto.nombre} — $${producto.precio_neto}`)
+                console.log(`  [OK] [${i + 1}/${links.length}] ${producto.nombre} - $${producto.precio_neto}`)
                 reporteFilas.push({ categoria, subcategoria, sub2, url: links[i], nombre: producto.nombre, estado })
               } else {
                 const isSinStock = producto?.skip_reason === 'sin_stock'
                 if (isSinStock) {
                   rachaSinStock++
-                  console.log(`  ✗ [${i + 1}/${links.length}] Sin stock real — omitido`)
+                  console.log(`  [NO] [${i + 1}/${links.length}] Sin stock real - omitido`)
                 } else {
                   rachaSinStock = 0
-                  console.log(`  ✗ [${i + 1}/${links.length}] Error DOM/Red — omitido (Racha reiniciada)`)
+                  console.log(`  [NO] [${i + 1}/${links.length}] Error DOM/Red - omitido (Racha reiniciada)`)
                 }
                 reporteFilas.push({ categoria, subcategoria, sub2, url: links[i], nombre: '', estado: producto?.skip_reason || 'error' })
 
                 if (guardadosCategoria >= 3 && rachaSinStock >= 5) {
-                  console.log(`  [!] Cortando categoría: 5 'sin stock' consecutivos después de éxito. Evitando listado muerto.`);
+                  console.log(`  [!] Cortando categoria: 5 'sin stock' consecutivos despues de exito. Evitando listado muerto.`);
                   break;
                 }
               }
@@ -537,21 +537,21 @@ async function main() {
             totalGuardados++
             guardadosCategoria++
             rachaSinStock = 0
-            console.log(`  ✓ [${i + 1}/${links.length}] ${producto.nombre} — $${producto.precio_neto}`)
+            console.log(`  [OK] [${i + 1}/${links.length}] ${producto.nombre} - $${producto.precio_neto}`)
             reporteFilas.push({ categoria, subcategoria, sub2: sub2Parseado, url: links[i], nombre: producto.nombre, estado })
           } else {
             const isSinStock = producto?.skip_reason === 'sin_stock'
             if (isSinStock) {
               rachaSinStock++
-              console.log(`  ✗ [${i + 1}/${links.length}] Sin stock real — omitido`)
+              console.log(`  [NO] [${i + 1}/${links.length}] Sin stock real - omitido`)
             } else {
               rachaSinStock = 0
-              console.log(`  ✗ [${i + 1}/${links.length}] Error DOM/Red — omitido (Racha reiniciada)`)
+              console.log(`  [NO] [${i + 1}/${links.length}] Error DOM/Red - omitido (Racha reiniciada)`)
             }
             reporteFilas.push({ categoria, subcategoria, sub2: sub2Parseado, url: links[i], nombre: '', estado: producto?.skip_reason || 'error' })
 
             if (guardadosCategoria >= 3 && rachaSinStock >= 5) {
-              console.log(`  [!] Cortando categoría: 5 'sin stock' consecutivos después de éxito. Evitando listado muerto.`);
+              console.log(`  [!] Cortando categoria: 5 'sin stock' consecutivos despues de exito. Evitando listado muerto.`);
               break;
             }
           }
