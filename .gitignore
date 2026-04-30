@@ -13,3 +13,5 @@ stock-dlds.xlsx
 *.log
 .DS_Store
 Thumbs.db
+.claude/
+logs/
