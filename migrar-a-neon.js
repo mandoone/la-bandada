@@ -14,6 +14,15 @@ const neon = new Pool({
   ssl: { rejectUnauthorized: false }
 })
 
+const MINIMO_URLS_PARA_STALE_CLEANUP = 2000
+
+function toIntOrNull(value) {
+  if (value === null || value === undefined || value === '') return null
+  const n = Number(value)
+  if (Number.isNaN(n)) return null
+  return Math.round(n)
+}
+
 async function migrar() {
   console.log('Iniciando migración a Neon...')
 
@@ -25,6 +34,8 @@ async function migrar() {
   console.log(`${productos.rows.length} productos a migrar`)
 
   let migrados = 0
+  const urlsMigradas = []
+
   for (const p of productos.rows) {
     await neon.query(`
       INSERT INTO products_raw
@@ -52,16 +63,46 @@ async function migrar() {
         fecha_captura = EXCLUDED.fecha_captura,
         galeria      = EXCLUDED.galeria
     `, [
-      p.provider_id, p.sku, p.nombre, p.marca, p.categoria, p.subcategoria, p.sub2,
-      p.precio_normal, p.precio_neto, p.descuento, p.descripcion,
-      p.imagen_url, p.producto_url, p.stock, p.estado, p.indicador,
-      p.cobertura_meses, p.fecha_captura, p.galeria
+      toIntOrNull(p.provider_id), p.sku, p.nombre, p.marca, p.categoria, p.subcategoria, p.sub2,
+      toIntOrNull(p.precio_normal), toIntOrNull(p.precio_neto), toIntOrNull(p.descuento), p.descripcion,
+      p.imagen_url, p.producto_url, toIntOrNull(p.stock), p.estado, p.indicador,
+      toIntOrNull(p.cobertura_meses), p.fecha_captura, p.galeria
     ])
+    urlsMigradas.push(p.producto_url)
     migrados++
     if (migrados % 100 === 0) console.log(`  ${migrados}/${productos.rows.length} migrados...`)
   }
 
   console.log(`Migración completada: ${migrados} productos en Neon`)
+  console.log(`Total URLs migradas en esta corrida: ${urlsMigradas.length}`)
+
+  // Stale cleanup: ocultar en Neon productos Vigentes que ya no existen en local
+  if (urlsMigradas.length < MINIMO_URLS_PARA_STALE_CLEANUP) {
+    console.warn(
+      `⚠️  Limpieza stale omitida: cantidad de URLs migradas sospechosamente baja ` +
+      `(${urlsMigradas.length} < ${MINIMO_URLS_PARA_STALE_CLEANUP})`
+    )
+  } else {
+    const staleResult = await neon.query(`
+      UPDATE products_raw
+      SET
+        estado    = 'Oculto',
+        stock     = 0,
+        indicador = 'oculto_stale_neon'
+      WHERE provider_id = 1
+        AND producto_url IS NOT NULL
+        AND estado = 'Vigente'
+        AND NOT (producto_url = ANY($1::text[]))
+    `, [urlsMigradas])
+
+    const ocultados = staleResult.rowCount
+    if (ocultados > 0) {
+      console.log(`Stale cleanup: ${ocultados} productos ocultados en Neon (estaban Vigentes pero ya no existen en local)`)
+    } else {
+      console.log('Stale cleanup: sin productos stale detectados, Neon está sincronizado')
+    }
+  }
+
   await local.end()
   await neon.end()
 }
