@@ -5,6 +5,157 @@ const path = require('path');
 
 const statusFilePath = path.join(__dirname, 'logs', 'last-run-status.json');
 
+async function actualizarEstadoProductos(neon, productos, runId) {
+  for (let i = 0; i < productos.length; i += 500) {
+    const lote = productos.slice(i, i + 500);
+    const values = [];
+    const placeholders = lote.map((producto, index) => {
+      const offset = index * 9;
+      values.push(
+        producto.producto_url,
+        producto.provider_id,
+        producto.nombre,
+        producto.estado,
+        producto.categoria,
+        producto.subcategoria,
+        producto.sub2,
+        producto.precio_neto,
+        runId
+      );
+      return `($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},$${offset + 6},$${offset + 7},$${offset + 8},$${offset + 9},NOW())`;
+    }).join(',');
+
+    await neon.query(`
+      INSERT INTO scraper_product_state (
+        producto_url, provider_id, nombre, estado,
+        categoria, subcategoria, sub2, precio_neto,
+        last_seen_run_id, updated_at
+      ) VALUES ${placeholders}
+      ON CONFLICT (producto_url) DO UPDATE SET
+        provider_id = EXCLUDED.provider_id,
+        nombre = EXCLUDED.nombre,
+        estado = EXCLUDED.estado,
+        categoria = EXCLUDED.categoria,
+        subcategoria = EXCLUDED.subcategoria,
+        sub2 = EXCLUDED.sub2,
+        precio_neto = EXCLUDED.precio_neto,
+        last_seen_run_id = EXCLUDED.last_seen_run_id,
+        updated_at = NOW();
+    `, values);
+  }
+}
+
+async function registrarCambiosProductos(neon, runId) {
+  await neon.query(`
+    CREATE TABLE IF NOT EXISTS scraper_product_state (
+      producto_url TEXT PRIMARY KEY,
+      provider_id INTEGER,
+      nombre TEXT,
+      estado TEXT,
+      categoria TEXT,
+      subcategoria TEXT,
+      sub2 TEXT,
+      precio_neto INTEGER,
+      last_seen_run_id INTEGER,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  await neon.query(`
+    CREATE TABLE IF NOT EXISTS scraper_product_changes (
+      id SERIAL PRIMARY KEY,
+      run_id INTEGER,
+      tipo_cambio TEXT NOT NULL,
+      producto_url TEXT,
+      provider_id INTEGER,
+      nombre TEXT,
+      categoria TEXT,
+      subcategoria TEXT,
+      sub2 TEXT,
+      precio_neto INTEGER,
+      estado_anterior TEXT,
+      estado_actual TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  const productosActuales = await neon.query(`
+    SELECT
+      producto_url, provider_id, nombre, estado,
+      categoria, subcategoria, sub2, precio_neto
+    FROM products_raw
+    WHERE provider_id = 1
+      AND producto_url IS NOT NULL;
+  `);
+
+  const stateCount = await neon.query('SELECT COUNT(*)::INTEGER AS total FROM scraper_product_state;');
+  const esBaselineInicial = stateCount.rows[0].total === 0;
+
+  if (esBaselineInicial) {
+    await actualizarEstadoProductos(neon, productosActuales.rows, runId);
+    console.log('Baseline inicial creada, sin cambios registrados');
+    return;
+  }
+
+  const estadoAnterior = await neon.query(`
+    SELECT producto_url, estado
+    FROM scraper_product_state;
+  `);
+  const estadosPorUrl = new Map(estadoAnterior.rows.map((p) => [p.producto_url, p.estado]));
+
+  const cambios = [];
+  for (const producto of productosActuales.rows) {
+    const estadoPrevio = estadosPorUrl.get(producto.producto_url);
+    const estadoActual = producto.estado;
+
+    let tipoCambio = null;
+    if (!estadoPrevio && estadoActual === 'Vigente') {
+      tipoCambio = 'nuevo';
+    } else if (estadoPrevio === 'Vigente' && estadoActual === 'Oculto') {
+      tipoCambio = 'ocultado';
+    } else if (estadoPrevio === 'Oculto' && estadoActual === 'Vigente') {
+      tipoCambio = 'reactivado';
+    }
+
+    if (tipoCambio) {
+      cambios.push({ ...producto, tipo_cambio: tipoCambio, estado_anterior: estadoPrevio || null });
+    }
+  }
+
+  for (let i = 0; i < cambios.length; i += 500) {
+    const lote = cambios.slice(i, i + 500);
+    const values = [];
+    const placeholders = lote.map((cambio, index) => {
+      const offset = index * 11;
+      values.push(
+        runId,
+        cambio.tipo_cambio,
+        cambio.producto_url,
+        cambio.provider_id,
+        cambio.nombre,
+        cambio.categoria,
+        cambio.subcategoria,
+        cambio.sub2,
+        cambio.precio_neto,
+        cambio.estado_anterior,
+        cambio.estado
+      );
+      return `($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},$${offset + 6},$${offset + 7},$${offset + 8},$${offset + 9},$${offset + 10},$${offset + 11})`;
+    }).join(',');
+
+    await neon.query(`
+      INSERT INTO scraper_product_changes (
+        run_id, tipo_cambio, producto_url, provider_id, nombre,
+        categoria, subcategoria, sub2, precio_neto,
+        estado_anterior, estado_actual
+      ) VALUES ${placeholders};
+    `, values);
+  }
+
+  await actualizarEstadoProductos(neon, productosActuales.rows, runId);
+  console.log(`Trazabilidad registrada: ${cambios.length} cambios de productos.`);
+}
+
 async function registrarRun() {
   console.log('Iniciando registro de ejecución del scraper en Neon...');
 
@@ -92,7 +243,14 @@ async function registrarRun() {
     ];
 
     const res = await neon.query(query, values);
-    console.log(`Registro insertado exitosamente con ID: ${res.rows[0].id}`);
+    const runId = res.rows[0].id;
+    console.log(`Registro insertado exitosamente con ID: ${runId}`);
+
+    try {
+      await registrarCambiosProductos(neon, runId);
+    } catch (err) {
+      console.error('Error al registrar trazabilidad de productos:', err.message);
+    }
 
     await neon.end();
     console.log('Registro completado.');
